@@ -6,14 +6,14 @@ official manuals, **one citation per step**. See [PLAN.md](PLAN.md) for the desi
 
 ```
 Manager ─► input guardrails ─► Query Verifier ─► Searcher ─► Filter ─► output guardrails
-            scope/injection/PII   brand/model/     web + pgvector  trust rank,   grounding +
+            scope/injection/PII   brand/model/     web + manuals   trust rank,   grounding +
             dangerous procedures  clarification    in parallel     dedupe, steps safety warnings
 ```
 
 | Component | File | LLM? |
 |---|---|---|
 | Query Verifier | `app/agents/query_verifier.py` | yes (structured output → `DeviceQuery`) |
-| Searcher | `app/agents/searcher.py` | no (Tavily + pgvector via `asyncio.gather`) |
+| Searcher | `app/agents/searcher.py` | no (Tavily + manual store via `asyncio.gather`) |
 | Filter | `app/agents/filter.py` | yes (writes steps from ranked sources) |
 | Manager | `app/agents/manager.py` | no (fixed pipeline) |
 | Input guardrails | `app/guardrails/input.py` | no |
@@ -32,16 +32,23 @@ Override the model with `LLM_MODEL`. The eval judge uses the same provider.
 
 ```bash
 py -3.11 -m venv .venv && .venv/Scripts/activate      # Windows
-pip install -e ".[ui,evals,dev]"
+pip install -r requirements.txt                       # no psycopg; uses Chroma locally
+pip install pytest pytest-asyncio respx fakeredis     # test tools
 cp .env.example .env                                 # set LLM_PROVIDER + its key (TAVILY_API_KEY optional)
 pytest                                               # no API keys needed
 
-docker compose up -d db redis                        # or point DATABASE_URL/REDIS_URL elsewhere
+docker compose up -d redis                           # or point REDIS_URL elsewhere
 uvicorn --factory app.api.main:create_app --reload
 streamlit run ui/streamlit_app.py
 ```
 
-Ingest a manual into pgvector:
+**Manual store** (`VECTOR_STORE`): `chroma` (default) is embedded and stored in
+`./data/chroma`, so local runs need no Postgres and no psycopg. That matters on Windows
+machines where Application Control blocks psycopg's DLL. docker-compose sets
+`pgvector` for the API. `requirements-prod.txt` adds the Postgres driver and is used
+only by the Dockerfile.
+
+Ingest a manual into the configured store:
 
 ```bash
 python -m scripts.ingest_manuals --brand Sony --model WH-1000XM5 --device-type headphones \

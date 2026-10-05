@@ -1,0 +1,26 @@
+# Runtime dependencies (API, UI, evals). Local default store is Chroma (VECTOR_STORE=chroma).
+# Keep in sync with pyproject.toml (tests/test_requirements.py checks this).
+# Production adds the pgvector driver via requirements-prod.txt.
+autogen-agentchat>=0.7,<0.8
+autogen-ext[openai]>=0.7,<0.8
+anthropic>=1.11
+pydantic>=2.7
+pydantic-settings>=2.3
+httpx>=0.27
+fastapi>=0.115
+uvicorn[standard]>=0.30
+redis>=5
+chromadb>=1.5,<2
+# autogen-core pins protobuf 5.29; newer googleapis-common-protos (pulled in by
+# chromadb's OpenTelemetry) ship protobuf-6 generated code that fails to import on 5.29.
+protobuf~=5.29.3
+googleapis-common-protos<=1.75.0
+fastembed>=0.4
+pypdf>=4
+# ui
+streamlit>=1.40
+# evals
+langsmith>=0.2
+langchain-core>=0.3
+langchain-anthropic>=0.3
+langchain-openai>=0.3

@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from app.schemas import DeviceQuery
-from app.tools.manual_store import ManualChunk, PgVectorManualStore
+from app.tools.manual_rag import ManualChunk
 from tests.fakes import HashEmbedder
 
 DSN = os.environ.get("TEST_DATABASE_URL")
@@ -29,6 +29,8 @@ async def store():
     async with await psycopg.AsyncConnection.connect(DSN, autocommit=True) as conn:
         await conn.execute("DROP TABLE IF EXISTS manual_chunks")
         await conn.execute(sql)
+    from app.tools.pgvector_store import PgVectorManualStore
+
     s = PgVectorManualStore(DSN, Embedder384())
     await s.open()
     yield s

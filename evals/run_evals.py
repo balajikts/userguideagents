@@ -6,7 +6,7 @@ LangSmith (results land in a LangSmith experiment; needs LANGSMITH_API_KEY):
 Offline (prints a table, writes evals/results/<timestamp>.json):
     python -m evals.run_evals --mode offline [--no-judge]
 
-Both modes run the real pipeline (Claude + Tavily + pgvector from .env), so
+Both modes run the real pipeline (LLM + Tavily + manual store from .env), so
 every run costs API calls: 14 examples x (2 pipeline calls + 2 judge calls).
 """
 

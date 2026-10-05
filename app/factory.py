@@ -12,8 +12,7 @@ from app.agents.query_verifier import QueryVerifierAgent
 from app.agents.searcher import SearcherAgent
 from app.config import Settings, get_settings
 from app.llm import get_model_client
-from app.tools.embeddings import FastEmbedEmbedder
-from app.tools.manual_store import PgVectorManualStore
+from app.tools.manual_rag import ManualStore, create_manual_store
 from app.tools.web_search import TavilySearchClient
 
 log = logging.getLogger(__name__)
@@ -22,12 +21,15 @@ log = logging.getLogger(__name__)
 @asynccontextmanager
 async def build_manager(settings: Settings | None = None) -> AsyncIterator[ManagerAgent]:
     s = settings or get_settings()
-    store = PgVectorManualStore(s.database_url, FastEmbedEmbedder(s.embedding_model, s.embedding_dim))
+    store: ManualStore | None
     try:
+        # Creating the store imports its backend (psycopg for pgvector), so it
+        # belongs inside the try: a missing driver degrades to web-only search.
+        store = create_manual_store(s)
         await store.open()
     except Exception:
-        log.exception("manual store unavailable; continuing with web search only")
-        store = None  # type: ignore[assignment]
+        log.exception("manual store %r unavailable; continuing with web search only", s.vector_store)
+        store = None
     web = TavilySearchClient(s.tavily_api_key, timeout=s.search_timeout_s) if s.tavily_api_key else None
     if web is None:
         log.warning("TAVILY_API_KEY not set; web search disabled")

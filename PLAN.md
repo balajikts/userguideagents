@@ -16,7 +16,7 @@ user ─► FastAPI /ask ─► Redis cache? ─► Manager (AutoGen BaseChatAge
    QueryVerifier  (LLM → DeviceQuery JSON)  ── low confidence ─► clarification question
              ▼
    Searcher (no LLM, asyncio.gather) ─┬─ WebSearch (Tavily, official-domain filter)
-                                      └─ ManualStore (pgvector, fastembed)
+                                      └─ ManualStore (Chroma locally / pgvector in prod, fastembed)
              ▼
    Filter  (deterministic trust rank + dedupe → LLM writes steps citing [S#])
              ▼
@@ -54,7 +54,7 @@ electronics-guide-assistant/
 │   ├── llm.py                 # model-client factory (Anthropic / OpenAI)
 │   ├── agents/
 │   │   ├── query_verifier.py  # 1. extract + clarify
-│   │   ├── searcher.py        # 2. parallel web + pgvector
+│   │   ├── searcher.py        # 2. parallel web + manual store
 │   │   ├── filter.py          # 3. rank, dedupe, write cited steps
 │   │   └── manager.py         # orchestrator
 │   ├── guardrails/
@@ -62,12 +62,14 @@ electronics-guide-assistant/
 │   │   └── output.py          # grounding, safety warnings
 │   ├── tools/
 │   │   ├── web_search.py      # Tavily client + official-domain map
-│   │   ├── manual_store.py    # pgvector store
+│   │   ├── manual_rag.py      # store interface + VECTOR_STORE factory
+│   │   ├── chroma_store.py    # Chroma backend (local default)
+│   │   ├── pgvector_store.py  # pgvector backend (prod; only module importing psycopg)
 │   │   └── embeddings.py      # fastembed wrapper
 │   ├── cache.py               # Redis answer cache + rate limit
 │   └── api/main.py            # FastAPI
 ├── ui/streamlit_app.py
-├── scripts/ingest_manuals.py  # PDF/text → chunks → pgvector
+├── scripts/ingest_manuals.py  # PDF/text → chunks → manual store
 ├── db/init.sql
 ├── evals/
 │   ├── golden_dataset.jsonl

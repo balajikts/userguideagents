@@ -3,7 +3,7 @@
 No LLM: given a ``DeviceQuery`` it runs three retrievals concurrently and merges
 them into ``SearchResults``:
 
-* manual store (pgvector) — chunks of ingested official manuals
+* manual store (Chroma or pgvector) — chunks of ingested official manuals
 * web search restricted to the brand's official domains
 * open web search for "<brand> <model> manual <task>" (catches mirrors and
   support pages on domains we don't know about; the Filter ranks them lower)
@@ -22,7 +22,7 @@ from autogen_agentchat.messages import BaseChatMessage, StructuredMessage
 from autogen_core import CancellationToken
 
 from app.schemas import DeviceQuery, SearchResults, Source, SourceOrigin
-from app.tools.manual_store import ManualStore
+from app.tools.manual_rag import ManualStore
 from app.tools.web_search import WebSearchClient, official_domains
 
 
@@ -37,7 +37,7 @@ class SearcherAgent(BaseChatAgent):
         timeout_s: float = 15.0,
         name: str = "searcher",
     ) -> None:
-        super().__init__(name, description="Searches official manuals (web + pgvector) in parallel.")
+        super().__init__(name, description="Searches official manuals (web + manual store) in parallel.")
         self._store = manual_store
         self._web = web_search
         self._manual_k = manual_k

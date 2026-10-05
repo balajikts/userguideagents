@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     grounding_min_overlap: float = 0.2
 
     # Retrieval
+    vector_store: Literal["chroma", "pgvector"] = "chroma"  # docker-compose sets pgvector
+    chroma_path: str = "./data/chroma"
     tavily_api_key: str | None = None
     web_search_results: int = 6
     database_url: str = "postgresql://guide:guide@localhost:5432/guide"

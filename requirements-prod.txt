@@ -1,0 +1,5 @@
+# Production image only (Dockerfile). Adds the Postgres/pgvector driver for VECTOR_STORE=pgvector.
+# Not for local Windows installs: psycopg[binary] ships a native DLL that Application Control may block.
+-r requirements.txt
+psycopg[binary,pool]>=3.2
+pgvector>=0.3

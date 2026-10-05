@@ -9,7 +9,7 @@ from autogen_core import CancellationToken
 
 from app.agents.searcher import SearcherAgent
 from app.schemas import DeviceQuery, SearchResults, SourceOrigin
-from app.tools.manual_store import InMemoryManualStore, ManualChunk
+from app.tools.manual_rag import InMemoryManualStore, ManualChunk
 from app.tools.web_search import TavilySearchClient, domain_matches, official_domains
 from tests.fakes import FakeWeb, HashEmbedder
 

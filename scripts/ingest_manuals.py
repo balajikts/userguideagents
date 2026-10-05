@@ -1,4 +1,4 @@
-"""Ingest official manuals (PDF or text) into pgvector.
+"""Ingest official manuals (PDF or text) into the manual store (VECTOR_STORE: chroma | pgvector).
 
     python -m scripts.ingest_manuals --brand Sony --model WH-1000XM5 --device-type headphones \
         --url https://helpguide.sony.net/mdr/wh1000xm5/v1/en/print.pdf --file manuals/wh1000xm5.pdf
@@ -18,8 +18,7 @@ from pathlib import Path
 import httpx
 
 from app.config import get_settings
-from app.tools.embeddings import FastEmbedEmbedder
-from app.tools.manual_store import ManualChunk, PgVectorManualStore
+from app.tools.manual_rag import ManualChunk, create_manual_store
 
 
 def chunk_text(text: str, *, size: int = 900, overlap: int = 150) -> list[str]:
@@ -75,7 +74,7 @@ async def main() -> None:
     chunks = build_chunks(pages, brand=a.brand, model=a.model, device_type=a.device_type, url=a.url, title=title)
 
     s = get_settings()
-    store = PgVectorManualStore(s.database_url, FastEmbedEmbedder(s.embedding_model, s.embedding_dim))
+    store = create_manual_store(s)
     await store.open()
     try:
         n = await store.add(chunks)

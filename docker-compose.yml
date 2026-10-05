@@ -37,6 +37,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      VECTOR_STORE: pgvector   # overrides the local default (chroma) from .env
       DATABASE_URL: postgresql://${POSTGRES_USER:-guide}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-guide}
       REDIS_URL: redis://redis:6379/0
     command: ["uvicorn", "--factory", "app.api.main:create_app", "--host", "0.0.0.0", "--port", "8000",
