@@ -1,0 +1,28 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Automatic HTTPS (Let's Encrypt) for DOMAIN; point its A record at the VPS first.
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# Public JSON API: https://DOMAIN/api/ask  → api:8000/ask
+	handle_path /api/* {
+		request_body {
+			max_size 64KB
+		}
+		reverse_proxy api:8000
+	}
+
+	# Streamlit UI (reverse_proxy handles its websocket upgrade).
+	handle {
+		reverse_proxy ui:8501
+	}
+}
