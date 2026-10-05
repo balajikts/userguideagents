@@ -161,11 +161,16 @@ def make_relevance(judge: Judge) -> Callable[..., Awaitable[dict]]:
     return answer_relevance
 
 
-def langchain_judge(model: str = "claude-opus-5-5", effort: str = "medium") -> Judge:
-    """LLM judge via langchain-anthropic using native structured outputs (no forced tool use)."""
-    from langchain_anthropic import ChatAnthropic
+def langchain_judge(provider: str = "anthropic", model: str | None = None, effort: str = "medium") -> Judge:
+    """LLM judge via LangChain using native structured outputs (no forced tool use)."""
+    if provider == "openai":
+        from langchain_openai import ChatOpenAI
 
-    llm = ChatAnthropic(model=model, max_tokens=4096, output_config={"effort": effort})
+        llm = ChatOpenAI(model=model or "gpt-5", reasoning_effort={"xhigh": "high", "max": "high"}.get(effort, effort))
+    else:
+        from langchain_anthropic import ChatAnthropic
+
+        llm = ChatAnthropic(model=model or "claude-opus-5-5", max_tokens=4096, output_config={"effort": effort})
 
     async def judge(prompt: str, schema: type[T]) -> T:
         return await llm.with_structured_output(schema, method="json_schema").ainvoke(prompt)  # type: ignore[return-value]

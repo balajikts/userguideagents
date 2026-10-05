@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 from app.agents.manager import ASSISTANT, USER, ManagerAgent
+from app.config import get_settings
 from app.factory import build_manager
 from evals.metrics import DETERMINISTIC, langchain_judge, make_faithfulness, make_relevance
 
@@ -42,10 +43,10 @@ def make_target(manager: ManagerAgent):
     return target
 
 
-def evaluators(use_judge: bool, judge_model: str):
+def evaluators(use_judge: bool, judge_model: str | None):
     evs = list(DETERMINISTIC)
     if use_judge:
-        j = langchain_judge(judge_model)
+        j = langchain_judge(get_settings().llm_provider, judge_model)
         evs += [make_faithfulness(j), make_relevance(j)]
     return evs
 
@@ -105,7 +106,7 @@ async def main() -> None:
     ap.add_argument("--mode", choices=["offline", "langsmith"], default="offline")
     ap.add_argument("--dataset-name", default="electronics-guide-golden")
     ap.add_argument("--no-judge", action="store_true", help="skip LLM-judged metrics")
-    ap.add_argument("--judge-model", default="claude-opus-5-5")
+    ap.add_argument("--judge-model", default=None, help="defaults to the provider's default model")
     ap.add_argument("--concurrency", type=int, default=4)
     a = ap.parse_args()
 

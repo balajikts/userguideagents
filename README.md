@@ -19,19 +19,21 @@ Manager ─► input guardrails ─► Query Verifier ─► Searcher ─► Fil
 | Input guardrails | `app/guardrails/input.py` | no |
 | Output guardrails | `app/guardrails/output.py` | no |
 
-The LLM is Claude (`claude-opus-5-5`) through `app/llm.py`, a small AutoGen
-`ChatCompletionClient` on the official `anthropic` SDK. It uses structured
-outputs, sets `effort` per agent, and enables server-side refusal fallbacks
-(`fallbacks: "default"`). AutoGen's bundled Anthropic client always sends
-`temperature`, which current Claude models reject. Set `LLM_PROVIDER=openai`
-to use OpenAI instead.
+**LLM provider** (`LLM_PROVIDER` in `.env`), one key needed:
+
+| Provider | Key | Default model | Client |
+|---|---|---|---|
+| `openai` | `OPENAI_API_KEY` | `gpt-5` | AutoGen `OpenAIChatCompletionClient` (strict structured outputs, `reasoning_effort`) |
+| `anthropic` | `ANTHROPIC_API_KEY` | `claude-opus-5-5` | `app/llm.py` on the official `anthropic` SDK (structured outputs, `effort`, refusal fallbacks) |
+
+Override the model with `LLM_MODEL`. The eval judge uses the same provider.
 
 ## Local development
 
 ```bash
 py -3.11 -m venv .venv && .venv/Scripts/activate      # Windows
 pip install -e ".[ui,evals,dev]"
-cp .env.example .env                                 # add ANTHROPIC_API_KEY, TAVILY_API_KEY
+cp .env.example .env                                 # set LLM_PROVIDER + its key (TAVILY_API_KEY optional)
 pytest                                               # no API keys needed
 
 docker compose up -d db redis                        # or point DATABASE_URL/REDIS_URL elsewhere
@@ -72,7 +74,7 @@ python -m evals.run_evals --mode langsmith          # LangSmith experiment (LANG
 python -m evals.run_evals --mode offline --no-judge # deterministic metrics only
 ```
 
-Each run calls the real pipeline (Claude + Tavily), so it costs money.
+Each run calls the real pipeline (LLM + Tavily), so it costs money.
 
 ## Deploying to a Hostinger VPS
 
@@ -83,7 +85,7 @@ Each run calls the real pipeline (Claude + Tavily), so it costs money.
 4. On the VPS:
    ```bash
    git clone <your repo> guide && cd guide
-   cp .env.example .env   # set ANTHROPIC_API_KEY, TAVILY_API_KEY, POSTGRES_PASSWORD, DOMAIN, ACME_EMAIL
+   cp .env.example .env   # set LLM_PROVIDER + key, POSTGRES_PASSWORD, DOMAIN, ACME_EMAIL (TAVILY_API_KEY optional)
    docker compose up -d --build
    docker compose exec api python -m scripts.ingest_manuals --brand ... --url ...
    ```

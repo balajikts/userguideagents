@@ -172,10 +172,18 @@ class ClaudeChatCompletionClient(ChatCompletionClient):
         return CLAUDE_MODEL_INFO
 
 
+_OPENAI_REASONING_PREFIXES = ("gpt-5", "o1", "o3", "o4")
+
+
 def get_model_client(effort: Effort = "medium", settings: Settings | None = None) -> ChatCompletionClient:
     s = settings or get_settings()
     if s.llm_provider == "openai":
         from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-        return OpenAIChatCompletionClient(model=s.llm_model, api_key=s.openai_api_key)
-    return ClaudeChatCompletionClient(s.llm_model, effort=effort, max_tokens=s.llm_max_tokens, api_key=s.anthropic_api_key)
+        kwargs: dict[str, Any] = {}
+        if s.model_name.startswith(_OPENAI_REASONING_PREFIXES):
+            # OpenAI reasoning models take low/medium/high; map our higher levels down.
+            kwargs["reasoning_effort"] = {"xhigh": "high", "max": "high"}.get(effort, effort)
+        # Structured outputs: AssistantAgent's output_content_type → response_format (strict schema).
+        return OpenAIChatCompletionClient(model=s.model_name, api_key=s.openai_api_key, **kwargs)
+    return ClaudeChatCompletionClient(s.model_name, effort=effort, max_tokens=s.llm_max_tokens, api_key=s.anthropic_api_key)

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     # LLM
     llm_provider: Literal["anthropic", "openai"] = "anthropic"
-    llm_model: str = "claude-opus-5-5"
+    llm_model: str | None = None  # defaults per provider, see model_name
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
     llm_max_tokens: int = 16000
@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     cache_ttl_s: int = 60 * 60 * 24
     rate_limit_per_min: int = 20
+
+    @property
+    def model_name(self) -> str:
+        return self.llm_model or {"anthropic": "claude-opus-5-5", "openai": "gpt-5"}[self.llm_provider]
 
 
 @lru_cache
